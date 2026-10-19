@@ -1,0 +1,8 @@
+import {readFileSync,writeFileSync,existsSync} from 'node:fs';import {resolve,dirname} from 'node:path';import {fileURLToPath} from 'node:url';import {randomBytes} from 'node:crypto';
+const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),peer=resolve(process.argv[2]||resolve(root,'..',root.endsWith('medflow-plm')?'medflow-mes':'medflow-plm'));
+const paths=[root,peer],names=paths.map(p=>JSON.parse(readFileSync(resolve(p,'package.json'),'utf8')).name);if(!names.includes('medflow-mes')||!names.includes('medflow-plm'))throw Error('仅允许连接独立MES和PLM项目');
+const contents=paths.map(p=>existsSync(resolve(p,'.dev.vars'))?readFileSync(resolve(p,'.dev.vars'),'utf8'):'');const keys=contents.map(t=>t.match(/^INTEGRATION_KEY=(.+)$/m)?.[1]?.trim()).filter(Boolean);
+if(keys.some(k=>k!==keys[0]))throw Error('两个系统已有不同服务密钥，未覆盖。请先由管理员核对并统一INTEGRATION_KEY。');
+const key=keys[0]||randomBytes(32).toString('hex');if(key.length<32)throw Error('已有密钥长度不足32字符，未覆盖');
+for(let i=0;i<2;i++){const target=names[1-i].replace('medflow-',''),url=target==='mes'?'http://127.0.0.1:5179':'http://127.0.0.1:5180';let content=contents[i];const match=content.match(/^PEERS_JSON=(.+)$/m);let peers={};if(match){try{peers=JSON.parse(match[1]);}catch{throw Error('PEERS_JSON无效，未覆盖配置');}}peers[target]={url};for(const [name,value]of Object.entries({INTEGRATION_KEY:key,PEERS_JSON:JSON.stringify(peers)})){const pattern=new RegExp('^'+name+'=.*$','m');content=pattern.test(content)?content.replace(pattern,name+'='+value):content.trimEnd()+'\n'+name+'='+value+'\n';}writeFileSync(resolve(paths[i],'.dev.vars'),content.trimStart(),'utf8');}
+console.log('MES / PLM 本地地址与通信凭据已配置。密钥没有输出；请重启两套服务。其他模型配置保持原样。');

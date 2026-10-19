@@ -1,0 +1,12 @@
+import type {Field,Operation,PageConfig,Column} from './contracts.ts';
+export const t=(name:string,label:string,required=true):Field=>({name,label,required});
+export const num=(name:string,label:string,min=0.000001):Field=>({name,label,type:'number',min,step:0.000001,required:true});
+export const dt=(name:string,label:string):Field=>({name,label,type:'date',required:true});
+export const memo=(name:string,label:string,required=true):Field=>({name,label,type:'textarea',required});
+export const sel=(name:string,label:string,collection:string,labelKey='name'):Field=>({name,label,collection,labelKey,type:'select',required:true});
+export const opts=(name:string,label:string,values:string,def?:string):Field=>({name,label,type:'select',required:true,default:def,options:values.split('|').map(v=>{const [value,label]=v.split(':');return {value,label:label||value};})});
+export const check=(name:string,label:string):Field=>({name,label,type:'checkbox'});
+export const line=(name:string,label:string,items:Field[]):Field=>({name,label,type:'lines',items,required:true});
+export const op=(action:string,label:string,fields:Field[]=[],row=false,description=''):Operation=>({action,label,fields,row,description,danger:action.endsWith('.remove')||action.endsWith('.cancel')});
+export const pg=(id:string,title:string,description:string,columns:string,operations:Operation[]=[]):PageConfig=>({id,title,description,collection:id,columns:columns.split('|').map(s=>{const[key,label,format]=s.split(':');return {key,label,format:format as Column['format']};}),operations});
+export const memberPage=(roles:string)=>pg('members','成员与权限','所有者授权账号身份；角色权限在服务端校验，停用后即停止访问。','name:成员|actor:登录身份|role:角色|status:状态:status',[op('member.create','授权成员',[t('actor','登录身份（email:邮箱 或实际用户ID）'),t('name','成员姓名'),opts('role','角色',roles)]),op('member.status','启停成员',[opts('status','状态','active:启用|inactive:停用')],true)]);

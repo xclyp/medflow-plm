@@ -1,0 +1,10 @@
+CREATE TABLE agent_config (id TEXT PRIMARY KEY, revision INTEGER NOT NULL, data TEXT NOT NULL, actor TEXT NOT NULL, at TEXT NOT NULL);
+CREATE TABLE agent_config_history (id TEXT PRIMARY KEY, revision INTEGER NOT NULL, data TEXT NOT NULL, actor TEXT NOT NULL, at TEXT NOT NULL);
+CREATE TABLE agent_sessions (id TEXT PRIMARY KEY, actor TEXT NOT NULL, title TEXT NOT NULL, busy TEXT, at TEXT NOT NULL);
+CREATE INDEX agent_sessions_actor ON agent_sessions(actor,at);
+CREATE TABLE agent_messages (id TEXT PRIMARY KEY, session_id TEXT NOT NULL, role TEXT NOT NULL, content TEXT NOT NULL, at TEXT NOT NULL);
+CREATE INDEX agent_messages_session ON agent_messages(session_id,at);
+CREATE TABLE agent_actions (id TEXT PRIMARY KEY, session_id TEXT NOT NULL, actor TEXT NOT NULL, kind TEXT NOT NULL, data TEXT NOT NULL, status TEXT NOT NULL, result TEXT, at TEXT NOT NULL);
+CREATE INDEX agent_actions_actor ON agent_actions(actor,session_id);
+CREATE TABLE agent_audit (id TEXT PRIMARY KEY, actor TEXT NOT NULL, session_id TEXT, event TEXT NOT NULL, detail TEXT NOT NULL, at TEXT NOT NULL);
+CREATE INDEX agent_audit_actor ON agent_audit(actor,at);
